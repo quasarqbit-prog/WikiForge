@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WikiForge — Wiki Generator</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--bg:#0e0f13;--surface:#15171e;--surface2:#1c1f2a;--surface3:#232738;--border:#2e3347;--border-glow:#4a6fa5;--accent:#c9a84c;--accent2:#7eb8d4;--accent3:#a0c878;--text:#d4d8e8;--text-muted:#7a809a;--text-dim:#4a5068;--danger:#c45c5c;--radius:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--border-glow)}
+.screen{display:none;width:100%;min-height:100vh}.screen.active{display:flex}
+#screen-home{flex-direction:column;align-items:center;padding:60px 24px 40px;background:radial-gradient(ellipse at 50% 0%,#1a2035,var(--bg) 60%);position:relative;overflow:hidden}
+#screen-home::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:400px;background:radial-gradient(ellipse,rgba(201,168,76,.06),transparent 70%);pointer-events:none}
+.home-logo{font-family:'Cinzel',serif;font-size:42px;font-weight:700;letter-spacing:4px;color:var(--accent);text-shadow:0 0 40px rgba(201,168,76,.3);margin-bottom:6px}
+.home-tagline{font-size:14px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:56px;font-family:'JetBrains Mono',monospace}
+.home-actions{display:flex;gap:16px;margin-bottom:56px;flex-wrap:wrap;justify-content:center}
+.home-section-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;width:100%;max-width:960px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.btn{font-family:'Cinzel',serif;font-size:13px;letter-spacing:1.5px;padding:12px 28px;border:none;border-radius:var(--radius);cursor:pointer;transition:all .2s;font-weight:600}
+.btn-primary{background:var(--accent);color:#0e0f13}.btn-primary:hover{background:#e0bb5a;transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,.3)}
+.btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--border-glow);color:var(--accent2);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text-muted);font-family:'Crimson Pro',serif;font-size:13px;letter-spacing:0;padding:8px 16px}.btn-ghost:hover{color:var(--text)}
+.btn-danger{background:var(--danger);color:#fff;font-family:'Crimson Pro',serif;letter-spacing:0;padding:7px 16px;font-size:13px}.btn-danger:hover{background:#d96a6a}
+.wikis-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;width:100%;max-width:960px}
+.wiki-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .25s;position:relative}
+.wiki-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.wiki-card-thumb{width:100%;height:130px;overflow:hidden;position:relative;background:var(--surface2);cursor:pointer}
+.wiki-thumb-inner{transform:scale(.35);transform-origin:top left;width:286%;height:286%;pointer-events:none;overflow:hidden}
+.wiki-card-info{padding:12px 16px;border-top:1px solid var(--border);cursor:pointer}
+.wiki-card-title{font-family:'Cinzel',serif;font-size:14px;color:var(--accent);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wiki-card-desc{font-size:12px;color:var(--text-muted);margin-bottom:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wiki-card-meta{font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+.wiki-card-actions{padding:8px 12px 12px;display:flex;gap:8px}
+.wiki-card-ver-btn{position:absolute;top:8px;right:8px;background:rgba(14,15,19,.8);border:1px solid var(--border);border-radius:5px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 8px;cursor:pointer;backdrop-filter:blur(4px);transition:all .15s;z-index:5}
+.wiki-card-ver-btn:hover{border-color:var(--accent);background:rgba(201,168,76,.12)}
+.versions-panel{display:none;background:var(--surface2);border-top:1px solid var(--border);padding:12px}
+.versions-panel.open{display:block}
+.version-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;border:1px solid transparent;font-size:12px;color:var(--text-muted);margin-bottom:4px;cursor:pointer;transition:all .15s}
+.version-item:hover{background:var(--surface3);border-color:var(--border)}
+.version-item-label{font-family:'JetBrains Mono',monospace;font-size:10px;flex:1}
+.version-item-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim)}
+.ver-add-btn{width:100%;background:transparent;border:1px dashed var(--border);color:var(--text-dim);border-radius:5px;padding:6px;font-size:11px;cursor:pointer;margin-top:4px;transition:all .15s;font-family:'JetBrains Mono',monospace}
+.ver-add-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.empty-state{text-align:center;color:var(--text-dim);padding:40px;grid-column:1/-1;font-size:16px}
+.empty-state svg{margin-bottom:16px;opacity:.3;display:block;margin-left:auto;margin-right:auto}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:440px;max-width:90vw;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.modal h2{font-family:'Cinzel',serif;font-size:20px;color:var(--accent);margin-bottom:24px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace}
+.form-group input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:10px 14px;font-family:'Crimson Pro',serif;font-size:16px;outline:none;transition:border-color .2s}
+.form-group input:focus{border-color:var(--accent)}
+.modal-footer{display:flex;gap:12px;justify-content:flex-end;margin-top:8px}
+#screen-editor{flex-direction:column;height:100vh;overflow:hidden}
+.editor-topbar{display:flex;align-items:center;gap:12px;padding:0 16px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+.editor-topbar-brand{font-family:'Cinzel',serif;font-size:14px;color:var(--accent);letter-spacing:2px;flex-shrink:0}
+.editor-wiki-title{font-size:14px;color:var(--text-muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.editor-wiki-title span{color:var(--text)}
+.autosave{font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;transition:color .3s;white-space:nowrap;flex-shrink:0}
+.autosave.saved{color:var(--accent3)}
+.info-btn{position:relative;background:transparent;border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;font-family:'Cinzel',serif;font-weight:600;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.info-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+.info-popup{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;width:290px;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.5);font-family:'JetBrains Mono',monospace;font-size:11px}
+.info-btn:hover .info-popup{display:block}
+.info-popup-title{color:var(--accent);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.info-kv{display:flex;justify-content:space-between;gap:12px;margin-bottom:4px}
+.info-kv span:first-child{color:var(--text-dim)}.info-kv span:last-child{color:var(--accent2);text-align:right}
+.info-popup hr{border:none;border-top:1px solid var(--border);margin:8px 0}
+.editor-body{display:flex;flex:1;overflow:hidden}
+.editor-left{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+.editor-left-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;flex-shrink:0}
+.editor-tab{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.editor-tab.active{color:var(--accent);border-bottom-color:var(--accent)}.editor-tab:hover:not(.active){color:var(--text)}
+.editor-panel{display:none;flex:1;overflow:hidden}.editor-panel.active{display:flex;flex-direction:column}
+.write-toolbar{display:flex;gap:4px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0}
+.tb-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:5px;min-width:30px;height:28px;padding:0 6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace}
+.tb-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tb-sep{width:1px;background:var(--border);margin:4px 2px;flex-shrink:0}
+#page-editor{flex:1;background:var(--surface2);border:none;color:var(--text);font-family:'Crimson Pro',serif;font-size:17px;line-height:1.7;padding:24px 28px;resize:none;outline:none;overflow-y:auto}
+#page-editor::placeholder{color:var(--text-dim)}
+.preview-frame{flex:1;overflow-y:auto;transition:background .25s}
+#preview-content{padding:28px 32px;max-width:760px;margin:0 auto;font-size:17px;line-height:1.8;font-family:'Crimson Pro',serif}
+#preview-content h1{font-family:'Cinzel',serif;font-size:28px;margin:0 0 20px;padding-bottom:10px;border-bottom:1px solid var(--pBorder,#2e3347);color:var(--pAccent,#c9a84c)}
+#preview-content h2{font-family:'Cinzel',serif;font-size:22px;margin:28px 0 14px;color:var(--pAccent2,#7eb8d4)}
+#preview-content h3{font-family:'Cinzel',serif;font-size:17px;margin:22px 0 10px}
+#preview-content p{margin:0 0 14px}
+#preview-content strong{color:var(--pAccent,#c9a84c);font-weight:600}
+#preview-content em{font-style:italic}
+#preview-content ul,#preview-content ol{margin:0 0 14px 24px}
+#preview-content li{margin-bottom:4px}
+#preview-content code{background:var(--surface3);border:1px solid var(--pBorder,#2e3347);border-radius:4px;padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#a0c878}
+#preview-content pre{background:var(--surface3);border:1px solid var(--pBorder,#2e3347);border-radius:8px;padding:16px 20px;margin:0 0 16px;overflow-x:auto}
+#preview-content pre code{background:none;border:none;padding:0;font-size:13px}
+#preview-content blockquote{border-left:3px solid var(--pAccent,#c9a84c);padding:4px 0 4px 16px;color:var(--text-muted);margin:0 0 14px;font-style:italic}
+#preview-content table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:15px}
+#preview-content th{background:var(--surface3);border:1px solid var(--pBorder,#2e3347);padding:8px 12px;text-align:left;font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;color:var(--pAccent,#c9a84c)}
+#preview-content td{border:1px solid var(--pBorder,#2e3347);padding:8px 12px}
+#preview-content tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+#preview-content a{color:var(--pAccent2,#7eb8d4);text-decoration:underline;text-decoration-color:rgba(126,184,212,.4)}
+#preview-content hr{border:none;border-top:1px solid var(--pBorder,#2e3347);margin:24px 0}
+#preview-content img{max-width:100%;border-radius:6px}
+#preview-content .spoiler{background:var(--surface3);border-radius:5px;padding:2px 8px;cursor:pointer;user-select:none;display:inline-block;border:1px solid var(--border);transition:all .2s}
+#preview-content .spoiler:hover{border-color:var(--accent)}
+#preview-content .spoiler-text{filter:blur(5px);transition:filter .25s;pointer-events:none;display:inline}
+#preview-content .spoiler.revealed .spoiler-text{filter:none}
+#preview-content .spoiler.revealed{background:transparent;border-color:transparent}
+.page-navbar{display:flex;align-items:center;justify-content:center;padding:10px 20px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;gap:0}
+.page-nav-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:var(--radius);cursor:pointer;font-size:16px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.page-nav-btn:hover{border-color:var(--accent2);color:var(--accent2)}.page-nav-btn:disabled{opacity:.3;pointer-events:none}
+.page-nav-info{padding:0 16px;font-size:13px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;min-width:120px;text-align:center}
+.page-nav-add{background:var(--accent);border:none;color:#0e0f13;width:36px;height:36px;border-radius:var(--radius);cursor:pointer;font-size:20px;font-weight:700;margin:0 8px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.page-nav-add:hover{background:#e0bb5a;transform:scale(1.05)}
+.page-nav-del{background:transparent;border:1px solid var(--border);color:var(--danger);width:36px;height:36px;border-radius:var(--radius);cursor:pointer;font-size:14px;margin-left:8px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.page-nav-del:hover{border-color:var(--danger);background:rgba(196,92,92,.1)}
+.editor-right{width:280px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);overflow-y:auto;overflow-x:hidden}
+.settings-section{padding:16px 20px;border-bottom:1px solid var(--border)}
+.settings-section-title{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-dim)}
+.settings-section-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:0}
+.toggle-arrow{color:var(--text-dim);font-size:10px;transition:transform .2s}
+.settings-section.collapsed .settings-section-body{display:none}
+.settings-section.collapsed .toggle-arrow{transform:rotate(-90deg)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.setting-row:last-child{margin-bottom:0}
+.setting-label{font-size:13px;color:var(--text-muted);flex:1}
+.setting-row input[type=color]{width:40px;height:28px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:none;padding:2px;outline:none}
+.setting-row input[type=range]{flex:1;accent-color:var(--accent)}
+.s-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:13px;outline:none;font-family:'Crimson Pro',serif}
+.s-input:focus{border-color:var(--accent)}
+.s-select{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 10px;font-size:13px;outline:none;font-family:'Crimson Pro',serif}
+.setting-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.val-display{font-size:12px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;min-width:28px;text-align:right}
+.page-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.page-list-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:5px;cursor:pointer;border:1px solid transparent;transition:all .15s;font-size:13px;color:var(--text-muted)}
+.page-list-item:hover{background:var(--surface2);border-color:var(--border)}.page-list-item.active{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.page-list-num{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);min-width:18px}
+.page-list-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.settings-spacer{flex:1;min-height:16px}
+.build-btn-wrap{padding:16px 20px;border-top:1px solid var(--border)}
+.btn-build{width:100%;background:linear-gradient(135deg,#c9a84c,#e0c068);color:#0a0b0e;border:none;border-radius:var(--radius);padding:14px;font-family:'Cinzel',serif;font-size:14px;letter-spacing:2px;cursor:pointer;transition:all .2s;font-weight:700;margin-bottom:8px;display:block}
+.btn-build:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(201,168,76,.4)}
+.btn-export{width:100%;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:var(--radius);padding:9px;font-size:12px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;display:block}
+.btn-export:hover{border-color:var(--accent2);color:var(--accent2)}
+.page-title-bar{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.page-title-bar label{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap}
+#page-title-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'Cinzel',serif;font-size:16px;outline:none}
+#page-title-input::placeholder{color:var(--text-dim)}
+#import-file-input{display:none}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--accent3);color:var(--accent3);padding:12px 20px;border-radius:var(--radius);font-size:13px;font-family:'JetBrains Mono',monospace;z-index:9999;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+</style>
+</head>
+<body>
+
+<div id="screen-home" class="screen active">
+  <div class="home-logo">WikiForge</div>
+  <div class="home-tagline">Offline wiki generator by DapRatt.</div>
+  <div class="home-actions">
+    <button class="btn btn-primary" onclick="openCreateModal()">&#10022; Create Wiki</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">&#8593; Open .wfk</button>
+  </div>
+  <input type="file" id="import-file-input" accept=".wfk,.json" onchange="importWiki(event)">
+  <div class="home-section-label" id="saved-label" style="display:none">Saved Wikis</div>
+  <div class="wikis-grid" id="wikis-grid"></div>
+</div>
+
+<div id="screen-editor" class="screen">
+  <div class="editor-topbar">
+    <span class="editor-topbar-brand">WikiForge</span>
+    <span style="color:var(--border);font-size:18px">&#x2502;</span>
+    <span class="editor-wiki-title">Editing: <span id="topbar-wiki-name">&#x2014;</span></span>
+    <span class="autosave" id="autosave-indicator">&#x25CF; saved</span>
+    <button class="btn btn-ghost" onclick="goHome()">&#8592; Home</button>
+    <div class="info-btn" tabindex="0">&#x2139;
+      <div class="info-popup">
+        <div class="info-popup-title">Hot keys</div>
+        <div class="info-kv"><span>Bold</span><span>Ctrl+B</span></div>
+        <div class="info-kv"><span>Italic</span><span>Ctrl+I</span></div>
+        <div class="info-kv"><span>Prev Page</span><span>Alt+&#8592;</span></div>
+        <div class="info-kv"><span>Next Page</span><span>Alt+&#8594;</span></div>
+        <hr>
+        <div class="info-popup-title">Markdown</div>
+        <div class="info-kv"><span># Heading 1</span><span>## Heading 2</span></div>
+        <div class="info-kv"><span>**Bold**</span><span>*Italic*</span></div>
+        <div class="info-kv"><span>~~strikethrough~~</span><span>`code`</span></div>
+        <div class="info-kv"><span>[text](url)</span><span>link</span></div>
+        <div class="info-kv"><span>:::spoiler text:::</span><span>spoiler</span></div>
+        <hr>
+        <div class="info-popup-title">Search Modes</div>
+        <div class="info-kv"><span>By page</span><span>by title</span></div>
+        <div class="info-kv"><span>By words</span><span>words on page</span></div>
+        <div class="info-kv"><span>Exact</span><span>exact match</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="editor-body">
+    <div class="editor-left">
+      <div class="editor-left-tabs">
+        <div class="editor-tab active" onclick="switchTab('write')">▢ Editor</div>
+        <div class="editor-tab" onclick="switchTab('preview')">&#9673; Preview</div>
+      </div>
+      <div class="editor-panel active" id="panel-write">
+        <div class="page-title-bar">
+          <label>Heading:</label>
+          <input type="text" id="page-title-input" placeholder="Page title..." oninput="onPageTitleChange()">
+        </div>
+        <div class="write-toolbar">
+          <button class="tb-btn" title="Bold (Ctrl+B)" onclick="insertMd('**','**')"><b>B</b></button>
+          <button class="tb-btn" title="Italic (Ctrl+I)" onclick="insertMd('*','*')"><i>I</i></button>
+          <button class="tb-btn" title="Strikethrough" onclick="insertMd('~~','~~')">Ø</button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="Heading 1" onclick="insertLine('# ')">H1</button>
+          <button class="tb-btn" title="Heading 2" onclick="insertLine('## ')">H2</button>
+          <button class="tb-btn" title="Heading 3" onclick="insertLine('### ')">H3</button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="List" onclick="insertLine('- ')">•</button>
+          <button class="tb-btn" title="Numbered" onclick="insertLine('1. ')">1.</button>
+          <button class="tb-btn" title="Quote" onclick="insertLine('> ')">❝</button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="Inline Code" onclick="insertMd('`','`')">&lt;/&gt;</button>
+          <button class="tb-btn" title="Code Block" onclick="insertBlock('```\n','\n```')">&#9668;/&#9658;</button>
+          <button class="tb-btn" title="Link" onclick="insertLink()">&#128279;</button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="Horizontal Rule" onclick="insertLine('---')">&#8212;</button>
+          <button class="tb-btn" title="Table" onclick="insertTable()">⊞</button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="Spoiler" onclick="insertMd(':::spoiler ',':::')">▨</button>
+        </div>
+        <textarea id="page-editor" placeholder="text input field..." oninput="onEditorInput()"></textarea>
+      </div>
+      <div class="editor-panel" id="panel-preview">
+        <div class="preview-frame" id="preview-frame-bg">
+          <div id="preview-content"></div>
+        </div>
+      </div>
+      <div class="page-navbar">
+        <button class="page-nav-btn" id="nav-prev" onclick="navigatePage(-1)">&#8249;</button>
+        <span class="page-nav-info" id="page-nav-info">page 1 / 1</span>
+        <button class="page-nav-add" onclick="addPage()">+</button>
+        <span class="page-nav-info" id="page-nav-title" style="font-family:'Crimson Pro',serif;font-size:14px;color:var(--text)">&#8212;</span>
+        <button class="page-nav-btn" id="nav-next" onclick="navigatePage(1)">&#8250;</button>
+        <button class="page-nav-del" onclick="deletePage()">&#128465;</button>
+      </div>
+    </div>
+    <div class="editor-right">
+      <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSection(this)">
+          <div class="settings-section-title">Pages</div>
+          <span class="toggle-arrow">&#9662;</span>
+        </div>
+        <div class="settings-section-body" style="margin-top:12px">
+          <div class="page-list" id="page-list"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSection(this)">
+          <div class="settings-section-title">Wiki Settings</div>
+          <span class="toggle-arrow">&#9662;</span>
+        </div>
+        <div class="settings-section-body" style="margin-top:14px">
+          <div class="setting-row"><span class="setting-label">Title</span><input type="text" id="s-wiki-name" class="s-input" oninput="onSettingChange()"></div>
+          <div class="setting-row"><span class="setting-label">Version</span><input type="text" id="s-version" class="s-input" placeholder="v1.0" oninput="onSettingChange()"></div>
+          <div class="setting-row"><span class="setting-label">Description</span></div>
+          <textarea id="s-tagline" rows="2" oninput="onSettingChange()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:8px 10px;font-size:13px;outline:none;font-family:'Crimson Pro',serif;resize:vertical" placeholder="Short description..."></textarea>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSection(this)">
+          <div class="settings-section-title">Design</div>
+          <span class="toggle-arrow">&#9662;</span>
+        </div>
+        <div class="settings-section-body" style="margin-top:14px">
+          <div class="setting-row"><span class="setting-label">Theme</span>
+            <select id="s-theme" class="s-select" onchange="onSettingChange()">
+              <option value="dark">Dark</option><option value="light">Light</option>
+              <option value="sepia">Sepia</option><option value="forest">Forest</option>
+              <option value="ocean">Ocean</option><option value="custom">Custom</option>
+            </select>
+          </div>
+          <div id="custom-colors" style="display:none">
+            <div class="setting-row"><span class="setting-label">Background</span><input type="color" id="s-bg-color" value="#0e0f13" oninput="onSettingChange()"></div>
+            <div class="setting-row"><span class="setting-label">Header</span><input type="color" id="s-header-color" value="#15171e" oninput="onSettingChange()"></div>
+            <div class="setting-row"><span class="setting-label">Accent</span><input type="color" id="s-accent-color" value="#c9a84c" oninput="onSettingChange()"></div>
+            <div class="setting-row"><span class="setting-label">text</span><input type="color" id="s-text-color" value="#d4d8e8" oninput="onSettingChange()"></div>
+          </div>
+          <div class="setting-row"><span class="setting-label">Font</span>
+            <select id="s-font" class="s-select" onchange="onSettingChange()">
+              <option value="crimson">Crimson Pro</option><option value="georgia">Georgia</option>
+              <option value="inter">Inter (Sans)</option><option value="mono">JetBrains Mono</option>
+              <option value="palatino">Palatino</option>
+            </select>
+          </div>
+          <div class="setting-row"><span class="setting-label">Text Size</span>
+            <input type="range" id="s-font-size" min="14" max="22" value="17" oninput="onSettingChange()">
+            <span class="val-display" id="s-font-size-val">17</span>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSection(this)">
+          <div class="settings-section-title">Layout</div>
+          <span class="toggle-arrow">&#9662;</span>
+        </div>
+        <div class="settings-section-body" style="margin-top:14px">
+          <div class="setting-row"><span class="setting-label">Max Width</span>
+            <select id="s-max-width" class="s-select" onchange="onSettingChange()">
+              <option value="680px">Narrow</option><option value="800px" selected>Standard</option>
+              <option value="960px">Wide</option><option value="100%">Full Screen</option>
+            </select>
+          </div>
+          <div class="setting-row"><span class="setting-label">Padding</span>
+            <input type="range" id="s-padding" min="16" max="60" value="32" oninput="onSettingChange()">
+            <span class="val-display" id="s-padding-val">32</span>
+          </div>
+          <div class="setting-row"><span class="setting-label">Header with Search</span><input type="checkbox" id="s-show-header" checked onchange="onSettingChange()"></div>
+          <div class="setting-row"><span class="setting-label">Sidebar Menu</span><input type="checkbox" id="s-sidebar" checked onchange="onSettingChange()"></div>
+          <div class="setting-row"><span class="setting-label">Bottom Navigation</span><input type="checkbox" id="s-bottom-nav" checked onchange="onSettingChange()"></div>
+          <div class="setting-row"><span class="setting-label">Scroll to Top Button</span><input type="checkbox" id="s-scroll-top" checked onchange="onSettingChange()"></div>
+          <div class="setting-row"><span class="setting-label">Table of Contents</span><input type="checkbox" id="s-toc" checked onchange="onSettingChange()"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-header" onclick="toggleSection(this)">
+          <div class="settings-section-title">Footer</div>
+          <span class="toggle-arrow">&#9662;</span>
+        </div>
+        <div class="settings-section-body" style="margin-top:14px">
+          <div class="setting-row"><span class="setting-label">Show</span><input type="checkbox" id="s-footer" checked onchange="onSettingChange()"></div>
+          <input type="text" id="s-footer-text" class="s-input" placeholder="Created with WikiForge" oninput="onSettingChange()" style="width:100%;margin-top:8px">
+        </div>
+      </div>
+      <div class="settings-spacer"></div>
+      <div class="build-btn-wrap">
+        <button class="btn-build" onclick="buildWiki()">↱ Build Wiki</button>
+        <button class="btn-export" onclick="exportWfk()">&#8595; Export Project .wfk</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-create">
+  <div class="modal">
+    <h2>&#10022; New Wiki</h2>
+    <div class="form-group"><label>Wiki Title</label><input type="text" id="new-wiki-name" placeholder="My Project" maxlength="60"></div>
+    <div class="form-group"><label>Version / Tag</label><input type="text" id="new-wiki-version" placeholder="v0.0 - beta" maxlength="20"></div>
+    <div class="form-group"><label>Description (optional)</label><input type="text" id="new-wiki-desc" placeholder="Short description..." maxlength="160"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create')">Cancel</button>
+      <button class="btn btn-primary" onclick="createWiki()">Create</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal">
+    <h2 id="modal-confirm-title">Confirmation</h2>
+    <p id="modal-confirm-text" style="color:var(--text-muted);margin-bottom:24px;font-size:16px"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+
+function parseMarkdown(md) {
+  if (!md) return '';
+  var html = md;
+  function escH(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var codeBlocks = [];
+  html = html.replace(/```[\s\S]*?```/g, function(m) {
+    var code = m.replace(/^```\w*\n?/,'').replace(/```$/,'');
+    codeBlocks.push('<pre><code>' + escH(code.trim()) + '</code></pre>');
+    return '\x00C' + (codeBlocks.length-1) + '\x00';
+  });
+  var inlineCodes = [];
+  html = html.replace(/`([^`]+)`/g, function(m,c) {
+    inlineCodes.push('<code>' + escH(c) + '</code>');
+    return '\x00I' + (inlineCodes.length-1) + '\x00';
+  });
+  html = html.replace(/:::spoiler ([\s\S]+?):::/g, function(m,text) {
+    return '<span class="spoiler"><span class="spoiler-text">' + text.trim() + '</span></span>';
+  });
+  html = html.replace(/(\|.+\|)\n(\|[-: |]+\|)\n((?:\|.+\|[\n]?)+)/g, function(match,header,sep,rows) {
+    var ths = header.trim().split('|').filter(function(c){return c.trim();}).map(function(c){return '<th>'+c.trim()+'</th>';}).join('');
+    var trs = rows.trim().split('\n').map(function(r){return '<tr>'+r.split('|').filter(function(c){return c.trim();}).map(function(c){return '<td>'+c.trim()+'</td>';}).join('')+'</tr>';}).join('');
+    return '<table><thead><tr>'+ths+'</tr></thead><tbody>'+trs+'</tbody></table>\n';
+  });
+  html = html.replace(/^#{6} (.+)$/gm,'<h6>$1</h6>').replace(/^#{5} (.+)$/gm,'<h5>$1</h5>').replace(/^#{4} (.+)$/gm,'<h4>$1</h4>').replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  html = html.replace(/^---+$/gm,'<hr>');
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/~~(.+?)~~/g,'<del>$1</del>');
+  html = html.replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>');
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1">');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1</a>');
+  html = html.replace(/(^- .+(\n|$))+/gm, function(match) {
+    return '<ul>'+match.trim().split('\n').map(function(l){return '<li>'+l.replace(/^- /,'').trim()+'</li>';}).join('')+'</ul>\n';
+  });
+  html = html.replace(/(^\d+\. .+(\n|$))+/gm, function(match) {
+    return '<ol>'+match.trim().split('\n').map(function(l){return '<li>'+l.replace(/^\d+\. /,'').trim()+'</li>';}).join('')+'</ol>\n';
+  });
+  html = html.split('\n\n').map(function(b) {
+    b = b.trim();
+    if (!b) return '';
+    if (/^<(h[1-6]|ul|ol|pre|table|blockquote|hr)/.test(b) || b.charAt(0)==='\x00') return b;
+    return '<p>'+b.replace(/\n/g,'<br>')+'</p>';
+  }).join('\n');
+  for (var ci=0; ci<codeBlocks.length; ci++) html = html.replace('\x00C'+ci+'\x00', codeBlocks[ci]);
+  for (var ii=0; ii<inlineCodes.length; ii++) html = html.replace('\x00I'+ii+'\x00', inlineCodes[ii]);
+  return html;
+}
+
+
+var wikis = {};
+var currentWikiId = null;
+var currentPageIdx = 0;
+var autosaveTimer = null;
+var STORAGE_KEY = 'wikiforge_v1';
+
+var THEMES = {
+  dark:   {bg:'#0e0f13',header:'#15171e',accent:'#c9a84c',accent2:'#7eb8d4',text:'#d4d8e8',surface:'#15171e',border:'#2e3347'},
+  light:  {bg:'#f5f4ef',header:'#e8e6de',accent:'#7a5c2a',accent2:'#3a7a9c',text:'#2a2520',surface:'#ede9e0',border:'#ccc5b0'},
+  sepia:  {bg:'#2b2015',header:'#1e1608',accent:'#d4a853',accent2:'#a87c3a',text:'#e8d5b0',surface:'#221a0d',border:'#4a3820'},
+  forest: {bg:'#0d1a10',header:'#122016',accent:'#6aad5e',accent2:'#88c87c',text:'#c8e0c4',surface:'#112015',border:'#2a4030'},
+  ocean:  {bg:'#0a1520',header:'#0d1e2e',accent:'#4ab0d4',accent2:'#6ac8e8',text:'#b8d8e8',surface:'#0e1e30',border:'#1e3a50'}
+};
+
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(wikis)); } catch(e) {} }
+function load() { try { var d = localStorage.getItem(STORAGE_KEY); if (d) wikis = JSON.parse(d); } catch(e) { wikis = {}; } }
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showScreen(id) { document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');}); document.getElementById(id).classList.add('active'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+function downloadFile(name, content, mime) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:mime}));
+  a.download = name; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
+
+function renderHome() {
+  var grid = document.getElementById('wikis-grid');
+  var label = document.getElementById('saved-label');
+  var ids = Object.keys(wikis);
+  label.style.display = ids.length ? '' : 'none';
+  if (!ids.length) {
+    grid.innerHTML = '<div class="empty-state"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="6" width="32" height="36" rx="3" stroke="currentColor" stroke-width="2"/><line x1="14" y1="16" x2="34" y2="16" stroke="currentColor" stroke-width="2"/><line x1="14" y1="22" x2="34" y2="22" stroke="currentColor" stroke-width="2"/><line x1="14" y1="28" x2="26" y2="28" stroke="currentColor" stroke-width="2"/></svg><div>No saved wikis found</div><div style="font-size:13px;margin-top:6px;color:var(--text-dim)">Create your first wiki</div></div>';
+    return;
+  }
+  grid.innerHTML = '';
+  ids.sort(function(a,b){ return (wikis[b].updatedAt||0)-(wikis[a].updatedAt||0); }).forEach(function(id) {
+    var w = wikis[id];
+    var pCount = w.pages ? w.pages.length : 0;
+    var date = w.updatedAt ? new Date(w.updatedAt).toLocaleDateString('ru') : '—';
+    var firstHtml = (w.pages && w.pages[0]) ? parseMarkdown(w.pages[0].content||'') : '';
+    var s = w.settings || {};
+    var theme = THEMES[s.theme] || THEMES.dark;
+    var thumbBg = 'background:'+theme.bg+';color:'+theme.text+';padding:20px;font-family:"Crimson Pro",serif;min-height:400px';
+    var versions = w.versions || [];
+    var card = document.createElement('div');
+    card.className = 'wiki-card';
+    var html = '';
+    html += '<button class="wiki-card-ver-btn" onclick="toggleVersionPanel(\''+id+'\',event)">ⅴ '+(versions.length ? versions.length+' vres.' : 'versions')+'</button>';
+    html += '<div class="wiki-card-thumb" onclick="openWiki(\''+id+'\')"><div class="wiki-thumb-inner"><div style="'+thumbBg+'">';
+    html += '<div style="font-family:Cinzel,serif;font-size:22px;color:'+theme.accent+';margin-bottom:5px">'+esc(w.name)+'</div>';
+    if (w.version) html += '<div style="font-size:11px;color:'+theme.accent+';opacity:0.55;margin-bottom:6px">'+esc(w.version)+'</div>';
+    if (w.tagline) html += '<div style="font-size:12px;opacity:0.6;margin-bottom:10px;font-style:italic">'+esc(w.tagline)+'</div>';
+    html += '<div style="font-size:13px;line-height:1.5">'+firstHtml.substring(0,400)+'</div>';
+    html += '</div></div></div>';
+    html += '<div class="wiki-card-info" onclick="openWiki(\''+id+'\')">';
+    html += '<div class="wiki-card-title">'+esc(w.name)+(w.version ? ' <span style="font-size:10px;font-family:JetBrains Mono,monospace;opacity:0.5">'+esc(w.version)+'</span>' : '')+'</div>';
+    if (w.tagline) html += '<div class="wiki-card-desc">'+esc(w.tagline)+'</div>';
+    html += '<div class="wiki-card-meta">'+pCount+' page &#183; '+date+'</div></div>';
+    html += '<div class="versions-panel" id="vp-'+id+'">';
+    html += '<div style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Version History</div>';
+    html += '<div id="vlist-'+id+'">'+renderVersionList(id)+'</div>';
+    html += '<button class="ver-add-btn" onclick="saveVersion(\''+id+'\')">+ Save Current Version</button></div>';
+    html += '<div class="wiki-card-actions">';
+    html += '<button class="btn btn-secondary" style="font-size:12px;padding:7px 14px;flex:1" onclick="openWiki(\''+id+'\')">Edit</button>';
+    html += '<button class="btn btn-ghost" style="font-size:13px;padding:7px 10px;color:var(--danger)" onclick="confirmDeleteWiki(\''+id+'\',event)">&#128465;</button>';
+    html += '</div>';
+    card.innerHTML = html;
+    grid.appendChild(card);
+  });
+}
+
+function renderVersionList(id) {
+  var versions = (wikis[id] && wikis[id].versions) ? wikis[id].versions : [];
+  if (!versions.length) return '<div style="font-size:12px;color:var(--text-dim);padding:4px 0">No saved versions</div>';
+  var html = '';
+  for (var i = versions.length-1; i >= 0; i--) {
+    var v = versions[i];
+    var d = new Date(v.savedAt).toLocaleString('ru',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    html += '<div class="version-item" onclick="restoreVersion(\''+id+'\','+i+',event)">';
+    html += '<span class="version-item-label">&#128203; '+esc(v.versionLabel||('v'+(i+1)))+'</span>';
+    html += '<span class="version-item-date">'+d+'</span></div>';
+  }
+  return html;
+}
+
+function toggleVersionPanel(id, e) { e.stopPropagation(); document.getElementById('vp-'+id).classList.toggle('open'); }
+
+function saveVersion(id) {
+  var w = wikis[id];
+  if (!w.versions) w.versions = [];
+  var label = w.version || ('v'+(w.versions.length+1));
+  w.versions.push({savedAt:Date.now(),versionLabel:label,pages:JSON.parse(JSON.stringify(w.pages)),settings:JSON.parse(JSON.stringify(w.settings||{}))});
+  save();
+  document.getElementById('vlist-'+id).innerHTML = renderVersionList(id);
+  showToast('&#10003; versoin «'+label+'» saved');
+}
+
+function restoreVersion(id, idx, e) {
+  e.stopPropagation();
+  var v = wikis[id].versions[idx];
+  document.getElementById('modal-confirm-title').textContent = 'Restore Version?';
+  document.getElementById('modal-confirm-text').textContent = 'The wiki will be restored to version «'+v.versionLabel+'». Current progress will be overwritten.';
+  document.getElementById('modal-confirm-ok').textContent = 'Restore';
+  document.getElementById('modal-confirm-ok').onclick = function() {
+    wikis[id].pages = JSON.parse(JSON.stringify(v.pages));
+    wikis[id].settings = JSON.parse(JSON.stringify(v.settings));
+    wikis[id].updatedAt = Date.now();
+    save(); renderHome(); closeModal('modal-confirm'); showToast('Version restored');
+  };
+  openModal('modal-confirm');
+}
+
+function openCreateModal() {
+  document.getElementById('new-wiki-name').value = '';
+  document.getElementById('new-wiki-version').value = '';
+  document.getElementById('new-wiki-desc').value = '';
+  openModal('modal-create');
+  setTimeout(function(){ document.getElementById('new-wiki-name').focus(); }, 100);
+}
+
+function createWiki() {
+  var name = document.getElementById('new-wiki-name').value.trim();
+  if (!name) { document.getElementById('new-wiki-name').focus(); return; }
+  var version = document.getElementById('new-wiki-version').value.trim();
+  var tagline = document.getElementById('new-wiki-desc').value.trim();
+  var id = 'wiki_'+Date.now();
+  wikis[id] = {
+    name: name, version: version, tagline: tagline,
+    pages: [{title:'Home', content:'# '+name+'\n\n'+(tagline||'Welcome to the wiki!')+'\n\nStart writing here...'}],
+    settings: {theme:'dark',font:'crimson',fontSize:17,maxWidth:'800px',padding:32,showHeader:true,sidebar:true,bottomNav:true,scrollTop:true,toc:true,footer:true,footerText:'Created with WikiForge by DapRatt'},
+    versions: [], updatedAt: Date.now()
+  };
+  save(); closeModal('modal-create'); openWiki(id);
+}
+
+function confirmDeleteWiki(id, e) {
+  e && e.stopPropagation();
+  document.getElementById('modal-confirm-title').textContent = 'Delete wiki?';
+  document.getElementById('modal-confirm-text').textContent = '«'+wikis[id].name+'» will be permanently deleted.';
+  document.getElementById('modal-confirm-ok').textContent = 'Delete';
+  document.getElementById('modal-confirm-ok').onclick = function(){ delete wikis[id]; save(); closeModal('modal-confirm'); renderHome(); };
+  openModal('modal-confirm');
+}
+
+function openWiki(id) {
+  currentWikiId = id; currentPageIdx = 0;
+  showScreen('screen-editor');
+  loadSettingsUI(); loadPageUI(); updatePageList(); updateNavbar();
+  document.getElementById('topbar-wiki-name').textContent = wikis[id].name;
+  setAutosaveLabel('saved');
+  applyPreviewTheme();
+}
+function goHome() { showScreen('screen-home'); renderHome(); }
+function currentWiki() { return wikis[currentWikiId]; }
+function currentPage() { return currentWiki().pages[currentPageIdx]; }
+
+function loadPageUI() {
+  var p = currentPage();
+  document.getElementById('page-title-input').value = p.title || '';
+  document.getElementById('page-editor').value = p.content || '';
+  updatePreview();
+}
+function onEditorInput() { currentPage().content = document.getElementById('page-editor').value; updatePreview(); scheduleSave(); updatePageList(); }
+function onPageTitleChange() { currentPage().title = document.getElementById('page-title-input').value; updatePageList(); updateNavbar(); scheduleSave(); }
+
+function scheduleSave() {
+  setAutosaveLabel('saving');
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(function(){ currentWiki().updatedAt = Date.now(); save(); setAutosaveLabel('saved'); }, 800);
+}
+function setAutosaveLabel(state) {
+  var el = document.getElementById('autosave-indicator');
+  if (state === 'saved') { el.textContent = '\u25CF saved'; el.classList.add('saved'); }
+  else { el.textContent = '\u25CB saving...'; el.classList.remove('saved'); }
+}
+
+function navigatePage(dir) {
+  var pages = currentWiki().pages; var next = currentPageIdx + dir;
+  if (next < 0 || next >= pages.length) return;
+  currentPageIdx = next; loadPageUI(); updateNavbar(); updatePageList();
+}
+function addPage() {
+  var wiki = currentWiki();
+  wiki.pages.push({title:'New page', content:''});
+  currentPageIdx = wiki.pages.length - 1;
+  loadPageUI(); updateNavbar(); updatePageList(); scheduleSave();
+  document.getElementById('page-title-input').focus();
+}
+function deletePage() {
+  var wiki = currentWiki();
+  if (wiki.pages.length === 1) { showToast('Cannot delete the last page'); return; }
+  document.getElementById('modal-confirm-title').textContent = 'Delete page?';
+  document.getElementById('modal-confirm-text').textContent = 'Page «'+currentPage().title+'» will be deleted.';
+  document.getElementById('modal-confirm-ok').textContent = 'Delete';
+  document.getElementById('modal-confirm-ok').onclick = function(){
+    wiki.pages.splice(currentPageIdx, 1);
+    if (currentPageIdx >= wiki.pages.length) currentPageIdx = wiki.pages.length - 1;
+    loadPageUI(); updateNavbar(); updatePageList(); scheduleSave(); closeModal('modal-confirm');
+  };
+  openModal('modal-confirm');
+}
+function updateNavbar() {
+  var wiki = currentWiki(); var total = wiki.pages.length;
+  document.getElementById('page-nav-info').textContent = 'page '+(currentPageIdx+1)+' / '+total;
+  document.getElementById('page-nav-title').textContent = currentPage().title || '—';
+  document.getElementById('nav-prev').disabled = currentPageIdx === 0;
+  document.getElementById('nav-next').disabled = currentPageIdx === total - 1;
+}
+function updatePageList() {
+  var wiki = currentWiki();
+  document.getElementById('page-list').innerHTML = wiki.pages.map(function(p,i){
+    return '<div class="page-list-item'+(i===currentPageIdx?' active':'')+'" onclick="jumpToPage('+i+')">'+
+      '<span class="page-list-num">'+(i+1)+'</span>'+
+      '<span class="page-list-name">'+esc(p.title||'Untitled')+'</span></div>';
+  }).join('');
+}
+function jumpToPage(i) { currentPageIdx = i; loadPageUI(); updateNavbar(); updatePageList(); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.editor-tab').forEach(function(t,i){ t.classList.toggle('active',(tab==='write'&&i===0)||(tab==='preview'&&i===1)); });
+  document.getElementById('panel-write').classList.toggle('active', tab==='write');
+  document.getElementById('panel-preview').classList.toggle('active', tab==='preview');
+  if (tab==='preview') updatePreview();
+}
+
+function insertMd(before, after) {
+  var ta = document.getElementById('page-editor');
+  var s = ta.selectionStart, e = ta.selectionEnd;
+  var sel = ta.value.substring(s, e);
+  ta.setRangeText(before+(sel||'text')+after, s, e, 'end');
+  if (!sel) { ta.selectionStart = s+before.length; ta.selectionEnd = s+before.length+5; }
+  ta.focus(); onEditorInput();
+}
+function insertLine(prefix) {
+  var ta = document.getElementById('page-editor');
+  var s = ta.selectionStart;
+  var lineStart = ta.value.lastIndexOf('\n', s-1) + 1;
+  ta.setRangeText(prefix, lineStart, lineStart, 'start');
+  ta.focus(); onEditorInput();
+}
+function insertBlock(before, after) {
+  var ta = document.getElementById('page-editor');
+  var s = ta.selectionStart, e = ta.selectionEnd;
+  var sel = ta.value.substring(s, e);
+  ta.setRangeText(before+(sel||'code')+after, s, e, 'end');
+  ta.focus(); onEditorInput();
+}
+function insertLink() {
+  var ta = document.getElementById('page-editor');
+  var s = ta.selectionStart, e = ta.selectionEnd;
+  var sel = ta.value.substring(s, e) || 'link text';
+  ta.setRangeText('['+sel+'](https://)', s, e, 'end');
+  ta.focus(); onEditorInput();
+}
+function insertTable() {
+  var ta = document.getElementById('page-editor');
+  var s = ta.selectionStart;
+  ta.setRangeText('\n| Column 1 | Column 2 | Column 3 |\n|-----------|-----------|------------|\n| Cell    | Cell    | Cell     |\n| Cell    | Cell    | Cell     |\n\n', s, s, 'end');
+  ta.focus(); onEditorInput();
+}
+
+function updatePreview() {
+  document.getElementById('preview-content').innerHTML = parseMarkdown(currentPage().content || '');
+  document.querySelectorAll('#preview-content .spoiler').forEach(function(el){
+    el.onclick = function(){ el.classList.toggle('revealed'); };
+  });
+}
+
+function applyPreviewTheme() {
+  if (!currentWikiId) return;
+  var s = currentWiki().settings || {};
+  var theme = (s.theme==='custom' && s.customColors) ? s.customColors : (THEMES[s.theme] || THEMES.dark);
+  var frame = document.getElementById('preview-frame-bg');
+  var content = document.getElementById('preview-content');
+  frame.style.background = theme.bg;
+  content.style.color = theme.text;
+  content.style.setProperty('--pAccent', theme.accent);
+  content.style.setProperty('--pAccent2', theme.accent2 || theme.accent);
+  content.style.setProperty('--pBorder', theme.border || 'rgba(255,255,255,0.15)');
+  var fontMap = {crimson:"'Crimson Pro',Georgia,serif",georgia:"Georgia,'Times New Roman',serif",inter:"'Inter','Segoe UI',Arial,sans-serif",mono:"'JetBrains Mono','Courier New',monospace",palatino:"Palatino,'Palatino Linotype',serif"};
+  content.style.fontFamily = fontMap[s.font||'crimson'];
+  content.style.fontSize = (s.fontSize||17)+'px';
+}
+
+function loadSettingsUI() {
+  var w = currentWiki(); var s = w.settings;
+  document.getElementById('s-wiki-name').value = w.name;
+  document.getElementById('s-version').value = w.version || '';
+  document.getElementById('s-tagline').value = w.tagline || '';
+  document.getElementById('s-theme').value = s.theme || 'dark';
+  document.getElementById('s-font').value = s.font || 'crimson';
+  document.getElementById('s-font-size').value = s.fontSize || 17;
+  document.getElementById('s-font-size-val').textContent = s.fontSize || 17;
+  document.getElementById('s-max-width').value = s.maxWidth || '800px';
+  document.getElementById('s-padding').value = s.padding || 32;
+  document.getElementById('s-padding-val').textContent = s.padding || 32;
+  document.getElementById('s-show-header').checked = s.showHeader !== false;
+  document.getElementById('s-sidebar').checked = s.sidebar !== false;
+  document.getElementById('s-bottom-nav').checked = s.bottomNav !== false;
+  document.getElementById('s-scroll-top').checked = s.scrollTop !== false;
+  document.getElementById('s-toc').checked = s.toc !== false;
+  document.getElementById('s-footer').checked = s.footer !== false;
+  document.getElementById('s-footer-text').value = s.footerText || 'Created with WikiForge';
+  if (s.theme==='custom' && s.customColors) {
+    var t = s.customColors;
+    document.getElementById('s-bg-color').value = t.bg;
+    document.getElementById('s-header-color').value = t.header;
+    document.getElementById('s-accent-color').value = t.accent;
+    document.getElementById('s-text-color').value = t.text;
+  }
+  toggleCustomColors(s.theme === 'custom');
+}
+
+function onSettingChange() {
+  var w = currentWiki(); var s = w.settings;
+  w.name = document.getElementById('s-wiki-name').value;
+  w.version = document.getElementById('s-version').value;
+  w.tagline = document.getElementById('s-tagline').value;
+  s.theme = document.getElementById('s-theme').value;
+  s.font = document.getElementById('s-font').value;
+  s.fontSize = parseInt(document.getElementById('s-font-size').value);
+  s.maxWidth = document.getElementById('s-max-width').value;
+  s.padding = parseInt(document.getElementById('s-padding').value);
+  s.showHeader = document.getElementById('s-show-header').checked;
+  s.sidebar = document.getElementById('s-sidebar').checked;
+  s.bottomNav = document.getElementById('s-bottom-nav').checked;
+  s.scrollTop = document.getElementById('s-scroll-top').checked;
+  s.toc = document.getElementById('s-toc').checked;
+  s.footer = document.getElementById('s-footer').checked;
+  s.footerText = document.getElementById('s-footer-text').value;
+  if (s.theme === 'custom') {
+    s.customColors = {
+      bg: document.getElementById('s-bg-color').value,
+      header: document.getElementById('s-header-color').value,
+      accent: document.getElementById('s-accent-color').value,
+      text: document.getElementById('s-text-color').value
+    };
+  }
+  document.getElementById('s-font-size-val').textContent = s.fontSize;
+  document.getElementById('s-padding-val').textContent = s.padding;
+  document.getElementById('topbar-wiki-name').textContent = w.name;
+  toggleCustomColors(s.theme === 'custom');
+  applyPreviewTheme();
+  scheduleSave();
+}
+function toggleCustomColors(show) { document.getElementById('custom-colors').style.display = show ? '' : 'none'; }
+function toggleSection(header) { header.closest('.settings-section').classList.toggle('collapsed'); }
+
+
+function buildWiki() {
+  var wiki = currentWiki();
+  var html = generateWikiHTML(wiki);
+  var fname = (wiki.name||'wiki').replace(/[^\u0400-\u04ffa-z0-9_\- ]/gi,'_').replace(/\s+/g,'_') + '.html';
+  downloadFile(fname, html, 'text/html');
+  showToast('Wiki built and downloaded!');
+}
+
+function generateWikiHTML(wiki) {
+  var s = wiki.settings || {};
+  var TH = {
+    dark:   {bg:'#0e0f13',header:'#15171e',accent:'#c9a84c',accent2:'#7eb8d4',text:'#d4d8e8',surface:'#15171e',border:'#2e3347'},
+    light:  {bg:'#f5f4ef',header:'#e8e6de',accent:'#7a5c2a',accent2:'#3a7a9c',text:'#2a2520',surface:'#ede9e0',border:'#ccc5b0'},
+    sepia:  {bg:'#2b2015',header:'#1e1608',accent:'#d4a853',accent2:'#a87c3a',text:'#e8d5b0',surface:'#221a0d',border:'#4a3820'},
+    forest: {bg:'#0d1a10',header:'#122016',accent:'#6aad5e',accent2:'#88c87c',text:'#c8e0c4',surface:'#112015',border:'#2a4030'},
+    ocean:  {bg:'#0a1520',header:'#0d1e2e',accent:'#4ab0d4',accent2:'#6ac8e8',text:'#b8d8e8',surface:'#0e1e30',border:'#1e3a50'}
+  };
+  var t = (s.theme==='custom' && s.customColors) ? s.customColors : (TH[s.theme] || TH.dark);
+  var FM = {crimson:"'Crimson Pro',Georgia,serif",georgia:"Georgia,'Times New Roman',serif",inter:"'Inter','Segoe UI',Arial,sans-serif",mono:"'JetBrains Mono','Courier New',monospace",palatino:"Palatino,'Palatino Linotype',serif"};
+  var ff = FM[s.font||'crimson'];
+  var fs = s.fontSize || 17;
+  var mw = s.maxWidth || '800px';
+  var pd = s.padding || 32;
+  var showH = s.showHeader !== false;
+  var showSB = s.sidebar !== false;
+  var showBN = s.bottomNav !== false;
+  var showST = s.scrollTop !== false;
+  var showToc = s.toc !== false;
+  var showFt = s.footer !== false;
+  var ftText = s.footerText || 'Created with WikiForge';
+
+  var pagesJSON = JSON.stringify(wiki.pages.map(function(p){return {title:p.title||'Untitled',content:p.content||''};}));
+  var wikiJSON = JSON.stringify(wiki);
+
+  var o = '<!DOCTYPE html>\n<html lang="ru">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n';
+  o += '<title>' + esc(wiki.name) + (wiki.version?' '+esc(wiki.version):'') + '</title>\n';
+  o += '<style>\n@import url(\'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500&display=swap\');\n';
+  o += '*{box-sizing:border-box;margin:0;padding:0}\n';
+  o += 'body{font-family:'+ff+';font-size:'+fs+'px;background:'+t.bg+';color:'+t.text+';line-height:1.8;min-height:100vh;display:flex;flex-direction:column}\n';
+  o += '::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:'+t.bg+'}::-webkit-scrollbar-thumb{background:'+t.border+';border-radius:3px}\n';
+  o += '.wiki-header{background:'+t.header+';border-bottom:1px solid '+t.border+';padding:0 24px;display:flex;align-items:center;gap:12px;height:60px;flex-shrink:0;position:sticky;top:0;z-index:100}\n';
+  o += '.wiki-logo{font-family:Cinzel,serif;font-size:20px;font-weight:700;color:'+t.accent+';cursor:pointer;background:none;border:none;white-space:nowrap}\n';
+  o += '.wiki-version{font-size:11px;color:'+t.text+';opacity:0.35;font-family:JetBrains Mono,monospace;white-space:nowrap}\n';
+  o += '.wiki-tagline{font-size:12px;color:'+t.text+';opacity:0.45;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}\n';
+  o += '.search-wrap{flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:6px}\n';
+  o += '.sm-btn{background:rgba(255,255,255,0.05);border:1px solid '+t.border+';color:'+t.text+';opacity:0.6;border-radius:5px;padding:5px 9px;font-size:11px;font-family:JetBrains Mono,monospace;cursor:pointer;white-space:nowrap;transition:all .15s}\n';
+  o += '.sm-btn:hover,.sm-btn.active{opacity:1;border-color:'+t.accent+';color:'+t.accent+'}\n';
+  o += '.wiki-search{flex:1;position:relative}\n';
+  o += '.wiki-search input{width:100%;background:rgba(255,255,255,0.05);border:1px solid '+t.border+';border-radius:6px;color:'+t.text+';padding:8px 14px 8px 32px;font-family:'+ff+';font-size:14px;outline:none}\n';
+  o += '.wiki-search input:focus{border-color:'+t.accent+'}\n';
+  o += '.wiki-search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.4;pointer-events:none}\n';
+  o += '.s-results{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:'+t.surface+';border:1px solid '+t.border+';border-radius:8px;max-height:300px;overflow-y:auto;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.4)}\n';
+  o += '.s-result{padding:10px 14px;cursor:pointer;border-bottom:1px solid '+t.border+';transition:background .1s}\n';
+  o += '.s-result:hover{background:rgba(255,255,255,0.06)}\n';
+  o += '.s-result-title{font-family:Cinzel,serif;font-size:14px;color:'+t.accent+'}\n';
+  o += '.s-result-excerpt{font-size:12px;color:'+t.text+';opacity:0.5;margin-top:2px;line-height:1.5}\n';
+  o += '.s-result-excerpt mark{background:rgba(201,168,76,0.25);color:'+t.accent+';border-radius:2px;padding:0 2px}\n';
+  o += '.s-no-results{padding:14px;text-align:center;font-size:13px;opacity:0.4;font-family:JetBrains Mono,monospace}\n';
+  if (showSB) {
+    o += '.wiki-sidebar{width:220px;flex-shrink:0;background:'+t.surface+';border-right:1px solid '+t.border+';padding:20px 0;overflow-y:auto;position:sticky;top:0;height:100vh}\n';
+    o += '.sb-title{font-family:Cinzel,serif;font-size:13px;color:'+t.accent+';padding:0 18px 14px;border-bottom:1px solid '+t.border+';margin-bottom:12px;letter-spacing:1px}\n';
+    o += '.sb-pages{display:flex;flex-direction:column;gap:2px;padding:0 8px}\n';
+    o += '.sb-link{padding:8px 12px;border-radius:5px;cursor:pointer;font-size:14px;color:'+t.text+';opacity:0.65;transition:all .15s;border:1px solid transparent}\n';
+    o += '.sb-link:hover{opacity:1;background:rgba(255,255,255,0.05);border-color:'+t.border+'}\n';
+    o += '.sb-link.active{opacity:1;background:rgba(255,255,255,0.07);border-color:'+t.accent+';color:'+t.accent+'}\n';
+  }
+  o += '.wiki-body{display:flex;flex:1;overflow:hidden}\n';
+  o += '.wiki-content-wrap{flex:1;overflow-y:auto;scroll-behavior:smooth}\n';
+  o += '.wiki-content{max-width:'+mw+';margin:0 auto;padding:40px '+pd+'px}\n';
+  o += '.page-sec{display:none}.page-sec.active{display:block}\n';
+  if (showToc) {
+    o += '.toc{background:rgba(255,255,255,0.03);border:1px solid '+t.border+';border-radius:8px;padding:16px 20px;margin:0 0 28px}\n';
+    o += '.toc-title{font-family:Cinzel,serif;font-size:13px;color:'+t.accent+';margin-bottom:10px;letter-spacing:1px}\n';
+    o += '.toc ul{list-style:none;display:flex;flex-direction:column;gap:4px}\n';
+    o += '.toc a{color:'+t.text+';opacity:0.7;text-decoration:none;font-size:14px}.toc a:hover{opacity:1;color:'+t.accent+'}\n';
+    o += '.toc-l1{padding-left:0}.toc-l2{padding-left:16px}.toc-l3{padding-left:32px}\n';
+  }
+  o += '.md h1{font-family:Cinzel,serif;font-size:2em;color:'+t.accent+';margin:0 0 20px;padding-bottom:10px;border-bottom:1px solid '+t.border+'}\n';
+  o += '.md h2{font-family:Cinzel,serif;font-size:1.5em;color:'+t.accent+';margin:32px 0 16px;opacity:.9}\n';
+  o += '.md h3{font-family:Cinzel,serif;font-size:1.2em;margin:24px 0 12px}\n';
+  o += '.md p{margin:0 0 14px}\n.md strong{color:'+t.accent+';font-weight:600}\n.md em{opacity:.85;font-style:italic}\n';
+  o += '.md ul,.md ol{margin:0 0 14px 24px}\n.md li{margin-bottom:4px}\n';
+  o += '.md code{background:rgba(255,255,255,0.07);border:1px solid '+t.border+';border-radius:4px;padding:1px 6px;font-family:JetBrains Mono,monospace;font-size:.82em}\n';
+  o += '.md pre{background:rgba(255,255,255,0.05);border:1px solid '+t.border+';border-radius:8px;padding:16px 20px;margin:0 0 16px;overflow-x:auto}\n';
+  o += '.md pre code{background:none;border:none;padding:0}\n';
+  o += '.md blockquote{border-left:3px solid '+t.accent+';padding:4px 0 4px 16px;opacity:.75;margin:0 0 14px;font-style:italic}\n';
+  o += '.md table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:.9em}\n';
+  o += '.md th{background:rgba(255,255,255,0.05);border:1px solid '+t.border+';padding:8px 12px;text-align:left;font-family:Cinzel,serif;font-size:.75em;letter-spacing:1px;color:'+t.accent+'}\n';
+  o += '.md td{border:1px solid '+t.border+';padding:8px 12px}\n.md tr:nth-child(even) td{background:rgba(255,255,255,.02)}\n';
+  o += '.md a{color:'+t.accent2+';text-decoration:underline;text-decoration-color:rgba(126,184,212,.4)}\n';
+  o += '.md hr{border:none;border-top:1px solid '+t.border+';margin:24px 0}\n.md img{max-width:100%;border-radius:6px;margin:8px 0}\n';
+  o += '.spoiler{background:rgba(255,255,255,0.07);border-radius:5px;padding:2px 8px;cursor:pointer;user-select:none;display:inline-block;border:1px solid '+t.border+';transition:all .2s}\n';
+  o += '.spoiler:hover{border-color:'+t.accent+'}\n';
+  o += '.spoiler-text{filter:blur(5px);transition:filter .25s;pointer-events:none;display:inline}\n';
+  o += '.spoiler.revealed .spoiler-text{filter:none}\n.spoiler.revealed{background:transparent;border-color:transparent}\n';
+  if (showBN) {
+    o += '.page-nav-bar{border-top:1px solid '+t.border+';padding:20px '+pd+'px;max-width:'+mw+';margin:0 auto;display:flex;align-items:center;gap:16px}\n';
+    o += '.pnav-btn{background:rgba(255,255,255,0.05);border:1px solid '+t.border+';color:'+t.text+';padding:10px 20px;border-radius:6px;cursor:pointer;font-family:'+ff+';font-size:15px;transition:all .2s}\n';
+    o += '.pnav-btn:hover{border-color:'+t.accent+';color:'+t.accent+'}\n.pnav-btn:disabled{opacity:.3;pointer-events:none}\n';
+    o += '.pnav-spacer{flex:1}\n.pnav-counter{font-size:12px;opacity:0.4;font-family:JetBrains Mono,monospace}\n';
+  }
+  if (showFt) o += 'footer{background:'+t.surface+';border-top:1px solid '+t.border+';padding:16px 24px;text-align:center;font-size:12px;opacity:.5;font-family:JetBrains Mono,monospace}\n';
+  if (showST) o += '.scroll-top{position:fixed;bottom:72px;right:24px;background:'+t.accent+';color:'+t.bg+';border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:14px;opacity:0;transition:opacity .3s;z-index:200}.scroll-top.visible{opacity:1}\n';
+  o += '.wfk-btn{position:fixed;bottom:24px;right:24px;background:'+t.header+';border:1px solid '+t.border+';color:'+t.text+';border-radius:20px;padding:7px 14px;font-size:11px;font-family:JetBrains Mono,monospace;cursor:pointer;z-index:199;opacity:0.6;transition:all .2s}\n';
+  o += '.wfk-btn:hover{opacity:1;border-color:'+t.accent+';color:'+t.accent+'}\n';
+  o += '.wiki-desc-block{background:rgba(255,255,255,0.03);border:1px solid '+t.border+';border-radius:8px;padding:14px 20px;margin-bottom:24px;font-style:italic;opacity:.8;font-size:.95em}\n';
+  o += '@media(max-width:700px){'+( showSB?'.wiki-sidebar{display:none}':'')+'.wiki-header{padding:0 12px}.wiki-content{padding:20px 16px}.sm-btn{display:none}}\n';
+  o += '</style>\n</head>\n<body>\n';
+
+  if (showH) {
+    o += '<header class="wiki-header">\n';
+    o += '<button class="wiki-logo" onclick="showPage(0)">'+esc(wiki.name)+'</button>\n';
+    if (wiki.version) o += '<span class="wiki-version">'+esc(wiki.version)+'</span>\n';
+    o += '<div class="search-wrap">\n';
+    o += '<button class="sm-btn active" id="sm-pages" onclick="setSM(\'pages\')">By page</button>\n';
+    o += '<button class="sm-btn" id="sm-keywords" onclick="setSM(\'keywords\')">By words</button>\n';
+    o += '<button class="sm-btn" id="sm-exact" onclick="setSM(\'exact\')">Exact</button>\n';
+    o += '<div class="wiki-search"><span class="wiki-search-ico">&#8981;</span><input type="text" id="s-input" placeholder="Search wiki..." oninput="doSearch(this.value)" onblur="setTimeout(function(){hideSR()},200)"><div class="s-results" id="s-results"></div></div>\n';
+    o += '</div>\n</header>\n';
+  }
+  o += '<div class="wiki-body">\n';
+  if (showSB) o += '<nav class="wiki-sidebar"><div class="sb-title">'+esc(wiki.name)+'</div><div class="sb-pages" id="sb-pages"></div></nav>\n';
+  o += '<div class="wiki-content-wrap" id="content-wrap">\n<div class="wiki-content">\n';
+  if (wiki.tagline) o += '<div class="wiki-desc-block" id="wiki-desc">'+esc(wiki.tagline)+'</div>\n';
+  o += '<div id="pages-container"></div>\n';
+  if (showBN) o += '<div class="page-nav-bar"><button class="pnav-btn" id="btn-prev" onclick="changePage(curPage-1)">&#8249; Back</button><span class="pnav-spacer"></span><span class="pnav-counter" id="nav-ctr">1 / 1</span><span class="pnav-spacer"></span><button class="pnav-btn" id="btn-next" onclick="changePage(curPage+1)">Forward &#8250;</button></div>\n';
+  o += '</div>\n';
+  if (showFt) o += '<footer>'+esc(ftText)+'</footer>\n';
+  o += '</div>\n</div>\n';
+  if (showST) o += '<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:\'smooth\'})">&#9650;</button>\n';
+  o += '<button class="wfk-btn" onclick="exportWFK()" title="Download project .wfk">&#8595; .wfk</button>\n';
+  o += '<script>\n';
+  o += 'var PAGES = ' + pagesJSON + ';\n';
+  o += 'var WIKI = ' + wikiJSON + ';\n';
+  o += 'var curPage = 0;\nvar searchMode = \'pages\';\n\n';
+  o += getMDParser();
+  o += '\nfunction buildToc(c){\n  var hh=(c.match(/^#{1,3} .+/gm)||[]);\n  if(hh.length<2)return \'\';\n  var r=\'<div class="toc"><div class="toc-title">Table of Contents</div><ul>\';\n  hh.forEach(function(h){var lv=h.match(/^#+/)[0].length;var tx=h.replace(/^#+\\s*/,\'\');var id=tx.toLowerCase().replace(/[^a-z\\u0400-\\u04ff0-9]/gi,\'_\');r+=\'<li class="toc-l\'+lv+\'"><a href="#\'+id+\'">\'+tx+\'</a></li>\';});\n  return r+\'</ul></div>\';\n}\n';
+  o += 'function addIDs(html){return html.replace(/<h([1-3])>([^<]+)<\\/h\\1>/g,function(m,lv,tx){var id=tx.toLowerCase().replace(/[^a-z\\u0400-\\u04ff0-9]/gi,\'_\');return \'<h\'+lv+\' id="\'+id+\'">\'+tx+\'</h\'+lv+\'>\';});}\n';
+  o += 'function buildPages(){\n  var c=document.getElementById(\'pages-container\');c.innerHTML=\'\';\n  PAGES.forEach(function(p,i){\n    var d=document.createElement(\'div\');d.className=\'page-sec\'+(i===0?\' active\':\'\');d.id=\'p-\'+i;\n    var ch=parseMarkdown(p.content);var toc='+(showToc?'buildToc(p.content)':'\'\'')+';\n    d.innerHTML=\'<div class="md">\'+toc+addIDs(ch)+\'</div>\';\n    c.appendChild(d);\n    d.querySelectorAll(\'.spoiler\').forEach(function(el){el.onclick=function(){el.classList.toggle(\'revealed\');};});\n  });\n}\n';
+  o += 'function buildSidebar(){\n  var sb=document.getElementById(\'sb-pages\');if(!sb)return;\n  sb.innerHTML=PAGES.map(function(p,i){return \'<div class="sb-link\'+(i===0?\' active \':\' \')+\'" onclick="showPage(\'+i+\')">\'+p.title+\'</div>\';}).join(\'\');\n}\n';
+  o += 'function showPage(idx){\n  if(idx<0||idx>=PAGES.length)return;\n  document.querySelectorAll(\'.page-sec\').forEach(function(el,i){el.classList.toggle(\'active\',i===idx);});\n  document.querySelectorAll(\'.sb-link\').forEach(function(el,i){el.classList.toggle(\'active\',i===idx);});\n  var db=document.getElementById(\'wiki-desc\');if(db)db.style.display=(idx===0)?\'\':\'none\';\n  curPage=idx;\n  document.getElementById(\'content-wrap\').scrollTo({top:0,behavior:\'smooth\'});\n  updateNav();\n}\n';
+  o += 'function changePage(idx){showPage(idx);}\n';
+  o += 'function updateNav(){\n  var pv=document.getElementById(\'btn-prev\');var nx=document.getElementById(\'btn-next\');var ct=document.getElementById(\'nav-ctr\');\n  if(pv)pv.disabled=curPage===0;if(nx)nx.disabled=curPage===PAGES.length-1;if(ct)ct.textContent=(curPage+1)+\' / \'+PAGES.length;\n}\n';
+  o += 'function setSM(m){\n  searchMode=m;\n  [\'pages\',\'keywords\',\'exact\'].forEach(function(k){var b=document.getElementById(\'sm-\'+k);if(b)b.classList.toggle(\'active\',k===m);});\n  var inp=document.getElementById(\'s-input\');\n  if(inp){inp.placeholder={pages:\'By titles...\',keywords:\'By words...\',exact:\'Exact text...\'}[m];doSearch(inp.value);}\n}\n';
+  o += 'function hlQ(text,q){if(!q)return text;var e=q.replace(/[.*+?^${}()|[\\]\\\\]/g,\'\\\\$&\');return text.replace(new RegExp(e,\'gi\'),function(m){return \'<mark>\'+m+\'</mark>\';});}\n';
+  o += 'function doSearch(q){\n  var box=document.getElementById(\'s-results\');if(!q||!q.trim()){box.style.display=\'none\';return;}\n  var res=[];\n  if(searchMode===\'pages\'){\n    PAGES.forEach(function(p,i){if(p.title.toLowerCase().indexOf(q.toLowerCase())>=0)res.push({i:i,title:hlQ(p.title,q),ex:\'\'});});\n  } else if(searchMode===\'keywords\'){\n    var wds=q.toLowerCase().split(/\\s+/).filter(Boolean);\n    PAGES.forEach(function(p,i){var tl=(p.title+\' \'+p.content).toLowerCase();var found=wds.filter(function(w){return tl.indexOf(w)>=0;});if(found.length>0){var idx2=p.content.toLowerCase().indexOf(wds[0]);var raw=idx2>=0?p.content.substring(Math.max(0,idx2-40),idx2+100).replace(/[#*`|>]/g,\'\'):\'\';var ex=wds.reduce(function(t,w){return hlQ(t,w);},raw);res.push({i:i,title:p.title,ex:ex+\'...\'});}});\n  } else {\n    PAGES.forEach(function(p,i){var full=p.title+\' \'+p.content;if(full.toLowerCase().indexOf(q.toLowerCase())>=0){var idx2=full.toLowerCase().indexOf(q.toLowerCase());var raw=full.substring(Math.max(0,idx2-40),idx2+100).replace(/[#*`|>]/g,\'\');res.push({i:i,title:p.title,ex:hlQ(raw,q)+\'...\'});}});\n  }\n  if(!res.length){box.innerHTML=\'<div class="s-no-results">No results found</div>\';box.style.display=\'block\';return;}\n  box.innerHTML=res.map(function(r){return \'<div class="s-result" onclick="showPage(\'+r.i+\');document.getElementById(\\\'s-input\\\').value=\\\'\\\';hideSR()"><div class="s-result-title">\'+r.title+\'</div><div class="s-result-excerpt">\'+r.ex+\'</div></div>\';}).join(\'\');\n  box.style.display=\'block\';\n}\n';
+  o += 'function hideSR(){var b=document.getElementById(\'s-results\');if(b)b.style.display=\'none\';}\n';
+  o += 'function exportWFK(){\n  var data=JSON.stringify({wfk:1,wiki:WIKI},null,2);\n  var fname=(WIKI.name||\'wiki\').replace(/[^\\u0400-\\u04ffa-z0-9_\\- ]/gi,\'_\').replace(/\\s+/g,\'_\')+\'.wfk\';\n  var a=document.createElement(\'a\');a.href=URL.createObjectURL(new Blob([data],{type:\'application/json\'}));a.download=fname;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);\n}\n';
+  if (showST) o += 'document.getElementById(\'content-wrap\').addEventListener(\'scroll\',function(){var b=document.getElementById(\'scroll-top\');if(b)b.classList.toggle(\'visible\',this.scrollTop>300);},{passive:true});\n';
+  o += 'buildPages();buildSidebar();updateNav();\n';
+  o += '<\/script>\n</body>\n</html>';
+  return o;
+}
+
+function getMDParser() {
+  var f = 'function parseMarkdown(md) {\n';
+  f += '  if (!md) return "";\n';
+  f += '  var html = md;\n';
+  f += '  function escH(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }\n';
+  f += '  var cb = [];\n';
+  f += '  html = html.replace(/```[\\s\\S]*?```/g, function(m) { var code=m.replace(/^```\\w*\\n?/,"").replace(/```$/,""); cb.push("<pre><code>"+escH(code.trim())+"</code></pre>"); return "\\x00C"+(cb.length-1)+"\\x00"; });\n';
+  f += '  var ic = [];\n';
+  f += '  html = html.replace(/`([^`]+)`/g, function(m,c) { ic.push("<code>"+escH(c)+"</code>"); return "\\x00I"+(ic.length-1)+"\\x00"; });\n';
+  f += '  html = html.replace(/:::spoiler ([\\s\\S]+?):::/g, function(m,text) { return "<span class=\\"spoiler\\"><span class=\\"spoiler-text\\">"+text.trim()+"</span></span>"; });\n';
+  f += '  html = html.replace(/(\\|.+\\|)\\n(\\|[-: |]+\\|)\\n((?:\\|.+\\|[\\n]?)+)/g, function(match,header,sep,rows) { var ths=header.trim().split("|").filter(function(c){return c.trim();}).map(function(c){return "<th>"+c.trim()+"</th>";}).join(""); var trs=rows.trim().split("\\n").map(function(r){return "<tr>"+r.split("|").filter(function(c){return c.trim();}).map(function(c){return "<td>"+c.trim()+"</td>";}).join("")+"</tr>";}).join(""); return "<table><thead><tr>"+ths+"</tr></thead><tbody>"+trs+"</tbody></table>\\n"; });\n';
+  f += '  html = html.replace(/^#{6} (.+)$/gm,"<h6>$1</h6>").replace(/^#{5} (.+)$/gm,"<h5>$1</h5>").replace(/^#{4} (.+)$/gm,"<h4>$1</h4>").replace(/^### (.+)$/gm,"<h3>$1</h3>").replace(/^## (.+)$/gm,"<h2>$1</h2>").replace(/^# (.+)$/gm,"<h1>$1</h1>");\n';
+  f += '  html = html.replace(/^---+$/gm,"<hr>");\n';
+  f += '  html = html.replace(/\\*\\*\\*(.+?)\\*\\*\\*/g,"<strong><em>$1</em></strong>").replace(/\\*\\*(.+?)\\*\\*/g,"<strong>$1</strong>").replace(/\\*(.+?)\\*/g,"<em>$1</em>").replace(/~~(.+?)~~/g,"<del>$1</del>");\n';
+  f += '  html = html.replace(/^> (.+)$/gm,"<blockquote>$1</blockquote>");\n';
+  f += '  html = html.replace(/!\\[([^\\]]*)\\]\\(([^)]+)\\)/g,"<img src=\\"$2\\" alt=\\"$1\\">");\n';
+  f += '  html = html.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g,"<a href=\\"$2\\">$1</a>");\n';
+  f += '  html = html.replace(/(^- .+(\\n|$))+/gm, function(match) { return "<ul>"+match.trim().split("\\n").map(function(l){return "<li>"+l.replace(/^- /,"").trim()+"</li>";}).join("")+"</ul>\\n"; });\n';
+  f += '  html = html.replace(/(^\\d+\\. .+(\\n|$))+/gm, function(match) { return "<ol>"+match.trim().split("\\n").map(function(l){return "<li>"+l.replace(/^\\d+\\. /,"").trim()+"</li>";}).join("")+"</ol>\\n"; });\n';
+  f += '  html = html.split("\\n\\n").map(function(b) { b=b.trim(); if(!b)return ""; if(/^<(h[1-6]|ul|ol|pre|table|blockquote|hr)/.test(b)||b.charAt(0)==="\\x00")return b; return "<p>"+b.replace(/\\n/g,"<br>")+"</p>"; }).join("\\n");\n';
+  f += '  for(var ci=0;ci<cb.length;ci++) html=html.replace("\\x00C"+ci+"\\x00",cb[ci]);\n';
+  f += '  for(var ii=0;ii<ic.length;ii++) html=html.replace("\\x00I"+ii+"\\x00",ic[ii]);\n';
+  f += '  return html;\n}\n';
+  return f;
+}
+
+
+function exportWfk() {
+  var wiki = currentWiki();
+  var data = JSON.stringify({wfk:1, wiki:wiki}, null, 2);
+  var fname = (wiki.name||'wiki').replace(/[^\u0400-\u04ffa-z0-9_\-]/gi,'_') + '.wfk';
+  downloadFile(fname, data, 'application/json');
+  showToast('Project exported');
+}
+
+function importWiki(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      var w = data.wfk ? data.wiki : data;
+      if (!w || !w.name) throw new Error('invalid');
+      var id = 'wiki_'+Date.now();
+      wikis[id] = Object.assign({}, w, {updatedAt: Date.now()});
+      save(); renderHome(); showToast('Wiki imported');
+    } catch(err) { showToast('Error: invalid file format'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (!currentWikiId) return;
+  var ta = document.getElementById('page-editor');
+  if (document.activeElement === ta && (e.ctrlKey || e.metaKey)) {
+    if (e.key === 'b') { e.preventDefault(); insertMd('**','**'); }
+    if (e.key === 'i') { e.preventDefault(); insertMd('*','*'); }
+  }
+  if (e.altKey) {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); navigatePage(-1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); navigatePage(1); }
+  }
+});
+
+document.querySelectorAll('.modal-overlay').forEach(function(o) {
+  o.addEventListener('click', function(e) { if (e.target === o) o.classList.remove('open'); });
+});
+document.getElementById('new-wiki-name').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') createWiki();
+});
+
+load();
+renderHome();
+</script>
+</body>
+</html>
