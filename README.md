@@ -1,4 +1,4 @@
-lamg - RUSIAN
+Язык - РУССКИЙ ru
 
 Below in English
 
@@ -56,7 +56,7 @@ Below in English
 
 ---
 
-lang - ENGLISH
+lang - ENGLISH англ.
 
 ---
 
